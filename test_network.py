@@ -8,6 +8,7 @@ print(x_test.shape)
 model = Network()
 model.add(Input(13))
 model.add(Layer(1))
+model.add(Layer(1))
 
 
 model.add_cost_function(MSE())

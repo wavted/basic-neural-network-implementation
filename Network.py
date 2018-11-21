@@ -40,7 +40,7 @@ class Layer():
         self.num_parameters = self.weights.size + self.biases.size
 
     def pretty_print(self, verbose=1):
-        s = self.name + '\t' +  str(self.nodes) + '\t' + str(self.num_parameters) + "\n" + self.activation.pretty_print()
+        s = self.name + '\t' +  str(self.nodes) + '\t' + str(self.num_parameters) + "\n" + self.activation.pretty_print(verbose=0)
         if(verbose):
             print(s)
         return s
@@ -112,20 +112,23 @@ class Network():
     def backprop(self, x_train_batch, y_train_batch): 
         
         #need to compute and return gradients
-        grad_biases = np.array([np.zeros(layer.biases.shape) for layer in self.layers[1:]])
-        grad_weights = np.array([np.zeros(layer.weights.shape) for layer in self.layers[1:]])
+        grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
+        grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         activations = list()
         activation_inputs = list()
         activation = x_train_batch
         activations.append(activation)
 
         for layer in self.layers[1:]: 
-            activation_input = [layer.forward(x, activation=False) for x in x_train_batch]
+            activation_input = [layer.forward(x, activation=False) for x in activations[-1]]
             activation_inputs.append(activation_input)
-            activation = [layer.activate(weighted_sum) for weighted_sum in activation_input]
+            activation = [layer.activate(weighted_sum) for weighted_sum in activation_input[-1]]
             activations.append(activation)
 
-        y_hat_arr = activations[-1] #y_hat_arr = self.feed_forward(x_train_batch)
+        activation_inputs = activation_inputs
+        activations = activations
+
+        y_hat_arr = [activations[layer_index][-1] for layer_index in range(len(self.layers))[1:]] #y_hat_arr = self.feed_forward(x_train_batch)
         cost_prime = np.mean(np.array([self.cost.prime(y_hat_arr[i], y_train_batch[i]) for i in range(len(y_hat_arr))]))
         delta = cost_prime*self.layers[-1].activation.activate_prime(activation_inputs[-1])
 
