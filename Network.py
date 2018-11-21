@@ -93,7 +93,7 @@ class Network():
 			outputs.append(output)
 		return np.array(outputs)
 
-	def stochastic_gradient_descent(self, training_data, epochs, batch_size=32, lr, test_data=None):
+	def stochastic_gradient_descent(self, training_data, epochs=10, batch_size=32, lr=1e-4, test_data=None):
 			if(not self.cost): 
 				print("Error: Network not compiled with a cost function!")
 				return 
@@ -107,11 +107,12 @@ class Network():
 				self.biases = self.biases - lr*grad_biases
 				train_batch, done = generator.query() 
 
+
 	def backprop(self, x_train_batch, y_train_batch): 
 		
 		#need to compute and return gradients
-		grad_biases = np.array([np.zeros(b) for b in self.biases])
-		grad_weights = np.array([np.zeros(w) for w in self.weights])
+		grad_biases = np.array([np.zeros(b.shape) for b in self.biases])
+		grad_weights = np.array([np.zeros(w.shape) for w in self.weights])
 		activations = list()
 		activation_inputs = list()
 		activation = x_train_batch
