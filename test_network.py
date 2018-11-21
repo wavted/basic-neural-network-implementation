@@ -3,6 +3,7 @@ import numpy as np
 from keras.datasets import boston_housing
 
 (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
+print(x_test.shape)
 
 model = Network()
 model.add(Input(13))
@@ -14,7 +15,7 @@ model.add_cost_function(MSE())
 for layer in model.layers: 
 	layer.pretty_print()
 
-inputs = x_test[0]
+inputs = np.array([x_test[0]])
 
 #print(model.feed_forward(inputs))
 

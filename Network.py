@@ -93,7 +93,7 @@ class Network():
             outputs.append(output)
         return np.array(outputs)
 
-    def stochastic_gradient_descent(self, training_data, epochs=10, batch_size=32, lr=1e-4, test_data=None):
+    def stochastic_gradient_descent(self, training_data, epochs=10, batch_size=32, lr=1, test_data=None):
             if(not self.cost): 
                 print("Error: Network not compiled with a cost function!")
                 return 
@@ -135,6 +135,8 @@ class Network():
             delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta)*activation_prime
             grad_biases[layer_index] = delta
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
+
+        print(grad_weights, grad_biases)
         return (grad_weights, grad_biases)
 
 
