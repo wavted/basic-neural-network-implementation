@@ -103,23 +103,24 @@ class Network():
             (x_train_batch, y_train_batch), done = generator.query() 
             while(not done):
                 (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
-                self.weights = self.weights - lr*grad_weights
-                self.biases = self.biases - lr*grad_biases
+                for i in range(len(self.layers))[1:]:
+                    self.layers[i].weights = self.layers[i].weights - lr*grad_weights[i -1]
+                    self.layers[i].biases = self.layers[i].biases - lr*grad_biases[i -1]
                 train_batch, done = generator.query() 
 
 
     def backprop(self, x_train_batch, y_train_batch): 
         
         #need to compute and return gradients
-        grad_biases = np.array([np.zeros(b.shape) for b in self.biases])
-        grad_weights = np.array([np.zeros(w.shape) for w in self.weights])
+        grad_biases = np.array([np.zeros(layer.biases.shape) for layer in self.layers[1:]])
+        grad_weights = np.array([np.zeros(layer.weights.shape) for layer in self.layers[1:]])
         activations = list()
         activation_inputs = list()
         activation = x_train_batch
         activations.append(activation)
 
-        for layer in self.layers: 
-            activation_input = [layer.feed_forward(x, activation=False) for x in x_train_batch]
+        for layer in self.layers[1:]: 
+            activation_input = [layer.forward(x, activation=False) for x in x_train_batch]
             activation_inputs.append(activation_input)
             activation = [layer.activate(weighted_sum) for weighted_sum in activation_input]
             activations.append(activation)

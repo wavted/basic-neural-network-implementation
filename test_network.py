@@ -1,22 +1,28 @@
 from Network import Network, Layer, Input, Linear, MSE
 import numpy as np
+from keras.datasets import boston_housing
+
+(x_train, y_train), (x_test, y_test) = boston_housing.load_data()
 
 model = Network()
-model.add(Input(2))
-model.add(Layer(3))
+model.add(Input(13))
+model.add(Layer(1))
 
 
 model.add_cost_function(MSE())
 
-inputs = np.array([np.empty((2, 1))])
+for layer in model.layers: 
+	layer.pretty_print()
+
+inputs = x_test[0]
 
 #print(model.feed_forward(inputs))
 
-print(model.feed_forward(inputs))
-print(model.layers[-1].biases)
+print(model.feed_forward(inputs)[0])
+print(y_test[0])
 
-model.stochastic_gradient_descent((inputs, np.array([[1, 0, 0]])))
-print(model.feed_forward(inputs))
+model.stochastic_gradient_descent((x_train, y_train))
+print(model.feed_forward(inputs)[0])
+print(y_test[0])
 
-for layer in model.layers: 
-	layer.pretty_print()
+
