@@ -87,9 +87,11 @@ class Network():
     def feed_forward(self, inputs_list):
         outputs = list()
         for inputs in inputs_list: 
-            output = inputs
+            output = inputs.reshape(len(inputs), 1)
+            #print(output.shape)
             for layer in self.layers[1:]: 
                 output = layer.forward(output)
+                print(output.shape)
             outputs.append(output)
         return np.array(outputs)
 
@@ -131,7 +133,7 @@ class Network():
         y_hat_arr = [activations[layer_index][-1] for layer_index in range(len(self.layers))[1:]] #y_hat_arr = self.feed_forward(x_train_batch)
         cost_prime = np.mean(np.array([self.cost.prime(y_hat_arr[i], y_train_batch[i]) for i in range(len(y_hat_arr))]))
         delta = cost_prime*self.layers[-1].activation.activate_prime(activation_inputs[-1])
-
+        #print(delta)
         for layer_index in range(1 - len(self.layers), -1)[::-1]:
             activation_input = activation_inputs[layer_index]
             activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
