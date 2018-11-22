@@ -86,16 +86,17 @@ class Network():
 
     def feed_forward(self, inputs_list):
         outputs = list()
+        inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
         for inputs in inputs_list: 
-            output = inputs.reshape(len(inputs), 1)
-            #print(output.shape)
+            #output = inputs.reshape(len(inputs), 1)
+            output = inputs
             for layer in self.layers[1:]: 
                 output = layer.forward(output)
                 print(output.shape)
             outputs.append(output)
         return np.array(outputs)
 
-    def stochastic_gradient_descent(self, training_data, epochs=10, batch_size=32, lr=1, test_data=None):
+    def stochastic_gradient_descent(self, training_data, epochs=200, batch_size=32, lr=1e-4, test_data=None):
             if(not self.cost): 
                 print("Error: Network not compiled with a cost function!")
                 return 
@@ -105,12 +106,16 @@ class Network():
             (x_train_batch, y_train_batch), done = generator.query() 
             while(not done):
                 (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
+                #for w in grad_weights:
+                #    print(w)
+                #for l in self.layers[1:]: 
+                #    print(l.weights.shape)
                 for i in range(len(self.layers))[1:]:
                     self.layers[i].weights = self.layers[i].weights - lr*grad_weights[i -1]
                     self.layers[i].biases = self.layers[i].biases - lr*grad_biases[i -1]
                 train_batch, done = generator.query() 
 
-
+    '''
     def backprop(self, x_train_batch, y_train_batch): 
         
         #need to compute and return gradients
@@ -128,20 +133,68 @@ class Network():
             activations.append(activation)
 
         activation_inputs = activation_inputs
-        activations = activations
+        #print(activations)
 
-        y_hat_arr = [activations[layer_index][-1] for layer_index in range(len(self.layers))[1:]] #y_hat_arr = self.feed_forward(x_train_batch)
+        #y_hat_arr = [activations[layer_index][-1] for layer_index in range(len(self.layers))[1:]] #y_hat_arr = self.feed_forward(x_train_batch)
+        y_hat_arr = activations[-1]
         cost_prime = np.mean(np.array([self.cost.prime(y_hat_arr[i], y_train_batch[i]) for i in range(len(y_hat_arr))]))
         delta = cost_prime*self.layers[-1].activation.activate_prime(activation_inputs[-1])
-        #print(delta)
+        print(delta.shape)
         for layer_index in range(1 - len(self.layers), -1)[::-1]:
             activation_input = activation_inputs[layer_index]
             activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
+            print("here: ", activation_prime.shape)
             delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta)*activation_prime
             grad_biases[layer_index] = delta
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
 
         print(grad_weights, grad_biases)
+        return (grad_weights, grad_biases)
+    '''
+
+    def backprop(self, x_train_batch, y_train_batch):
+        batch_size = len(x_train_batch)
+        grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
+        grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
+        for x, y in zip(x_train_batch, y_train_batch): 
+            grad_weights_new, grad_biases_new = self.backprop_one(x, y)
+            #grad_weights += grad_weights_new
+            #grad_biases += grad_biases_new
+            grad_weights = [grad_weights[i] + grad_weights_new[i] for i in range(len(grad_weights))]
+            grad_biases = [grad_biases[i] + grad_biases_new[i] for i in range(len(grad_biases))]
+        grad_weights = [layer_grad_weights/batch_size for layer_grad_weights in grad_weights]
+        grad_biases = [layer_grad_biases/batch_size for layer_grad_biases in grad_biases]
+
+        return (grad_weights, grad_biases)
+
+
+    def backprop_one(self, x, y): 
+        grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
+        grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
+        activations = list()
+        activation_inputs = list()
+        activation = x
+        activations.append(activation)
+
+        for layer in self.layers[1:]: 
+            activation_input = layer.forward(activations[-1], activation=False)
+            activation_inputs.append(activation_input)
+            activation = layer.activate(activation_input[-1])
+            activations.append(activation)
+
+        y_hat = activations[-1]
+        cost_prime = self.cost.prime(y_hat, y)
+        #print(cost_prime)
+        delta = cost_prime*self.layers[-1].activation.activate_prime(activation_inputs[-1])
+
+        for layer_index in range(1 - len(self.layers), -1)[::-1]:
+            activation_input = activation_inputs[layer_index]
+            activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
+            #print("here: ", activation_prime.shape)
+            delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta)*activation_prime
+            grad_biases[layer_index] = delta
+            grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
+        #print(grad_weights)
         return (grad_weights, grad_biases)
 
 
