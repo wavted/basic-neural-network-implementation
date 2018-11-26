@@ -51,7 +51,7 @@ class Layer():
         return s
 
 
-class Activation():
+class Activation(object):
     def __init__(self):
         self.name = "Not Defined"
 
@@ -86,7 +86,8 @@ class Sigmoid(Activation):
         return 1 / (1 + math.exp(-x))
 
     def activate_prime(self, x):
-        return np.ones_like(1 / (1 + math.exp(-x)))
+        fx = 1 / (1 + math.exp(-x))
+        return np.ones_like(fx * (1 - fx))
 
 
 class ReLU(Activation):
@@ -105,7 +106,7 @@ class ReLU(Activation):
         if x < 0:
             return np.ones_like(0)
         else:
-            return np.ones_like(x)
+            return np.ones_like(1)
 
 
 class ELU(Activation):
@@ -122,9 +123,9 @@ class ELU(Activation):
 
     def activate_prime(self, x, a):
         if x <= 0:
-            return np.ones_like(a * (math.exp(x) - 1))
+            return np.ones_like(a * (math.exp(x) - 1) + a)
         else:
-            return np.ones_like(x)
+            return np.ones_like(1)
 
 
 class Network():
