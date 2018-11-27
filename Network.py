@@ -22,6 +22,7 @@ class Layer():
         self.type = "dense"
         self.nodes = nodes
         self.biases = np.array(np.random.randn(nodes, 1))
+        #self.biases = np.zeros_like(self.biases)
         self.weights = None
         self.name = "Fully Connected Layer"
         self.num_parameters = len(self.biases)
@@ -41,6 +42,7 @@ class Layer():
 
     def set_weight_dims(self, prev_layer):
         self.weights = np.array(np.random.randn(self.nodes, prev_layer.nodes))
+        #self.weights = np.zeros_like(self.weights)
         self.num_parameters = self.weights.size + self.biases.size
 
     def pretty_print(self, verbose=1):
@@ -143,34 +145,54 @@ class Network():
 
     def feed_forward(self, inputs_list):
         outputs = list()
-        inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
+        #inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
+        inputs_list = inputs_list.reshape(inputs_list.shape + (1,))
         for inputs in inputs_list:
             # output = inputs.reshape(len(inputs), 1)
             output = inputs
             for layer in self.layers[1:]:
                 output = layer.forward(output)
-                print(output.shape)
+                #print(output.shape)
             outputs.append(output)
         return np.array(outputs)
 
-    def stochastic_gradient_descent(self, training_data, epochs=200, batch_size=32, lr=1e-4, test_data=None):
+
+    def summary(self):
+        s  = "Layer Name\t\tUnits\tParameters\n"
+        total_params = 0
+        for layer in self.layers: 
+            s += layer.pretty_print(verbose=0) + '\n'
+            total_params += layer.num_parameters
+        s += "------------------------------------------\n"
+        s += "Total params: " +  str(total_params) + '\n'
+        return s
+
+    def stochastic_gradient_descent(self, training_data, epochs=50, batch_size=32, lr=1e-7, test_data=None, freq=1):
         if (not self.cost):
             print("Error: Network not compiled with a cost function!")
             return
-
-        generator = Batch_Generator(training_data, batch_size)
-        generator.randomize()
-        (x_train_batch, y_train_batch), done = generator.query()
-        while (not done):
-            (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
-            # for w in grad_weights:
-            #    print(w)
-            # for l in self.layers[1:]:
-            #    print(l.weights.shape)
-            for i in range(len(self.layers))[1:]:
-                self.layers[i].weights = self.layers[i].weights - lr * grad_weights[i - 1]
-                self.layers[i].biases = self.layers[i].biases - lr * grad_biases[i - 1]
-            train_batch, done = generator.query()
+        for i in range(epochs):
+            generator = Batch_Generator(training_data, batch_size)
+            generator.randomize()
+            (x_train_batch, y_train_batch), done = generator.query()
+            while (not done):
+                (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
+                #print(grad_weights)
+                # for w in grad_weights:
+                #    print(w)
+                # for l in self.layers[1:]:
+                #    print(l.weights.shape)
+                for j in range(len(self.layers))[1:]:
+                    self.layers[j].weights = self.layers[j].weights - lr * grad_weights[j - 1]
+                    self.layers[j].biases = self.layers[j].biases - lr * grad_biases[j - 1]
+                (x_train_batch, y_train_batch), done = generator.query()
+            if(test_data and i%freq == 0):
+                loss = 0 
+                y_hats = self.feed_forward(test_data[0])
+                for k in range(len(test_data[0])):
+                    loss += self.cost.evaluate(y_hats[k], test_data[1][k])
+                loss /= len(test_data[0])
+                print("Epoch: " + str(i + 1), "Loss: " + str(loss))
 
     '''
     def backprop(self, x_train_batch, y_train_batch): 
@@ -225,6 +247,8 @@ class Network():
         return (grad_weights, grad_biases)
 
     def backprop_one(self, x, y):
+        x = x.reshape(x.shape + (1,))
+        #print(x.shape)
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         activations = list()
@@ -233,24 +257,30 @@ class Network():
         activations.append(activation)
 
         for layer in self.layers[1:]:
+            #print(activations)
             activation_input = layer.forward(activations[-1], activation=False)
             activation_inputs.append(activation_input)
-            activation = layer.activate(activation_input[-1])
+            #print(activation_inputs)
+            activation = layer.activate(activation_inputs[-1])
             activations.append(activation)
 
         y_hat = activations[-1]
         cost_prime = self.cost.prime(y_hat, y)
-        # print(cost_prime)
+        #print(cost_prime)
         delta = cost_prime * self.layers[-1].activation.activate_prime(activation_inputs[-1])
-
+        grad_biases[-1] = delta
+        grad_weights[-1] = np.dot(delta, activations[-2].transpose())
+        #print(delta)
         for layer_index in range(1 - len(self.layers), -1)[::-1]:
+            #print(layer_index)
             activation_input = activation_inputs[layer_index]
+            #print(activation_input)
             activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
-            # print("here: ", activation_prime.shape)
+            #print("here: ", activation_prime)
             delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta) * activation_prime
             grad_biases[layer_index] = delta
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
-        # print(grad_weights)
+        #print(grad_weights)
         return (grad_weights, grad_biases)
 
 
