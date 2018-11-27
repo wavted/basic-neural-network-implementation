@@ -53,7 +53,7 @@ class Layer():
         return s
 
 
-class Activation(object):
+class Activation():
     def __init__(self):
         self.name = "Not Defined"
 
@@ -88,8 +88,7 @@ class Sigmoid(Activation):
         return 1 / (1 + math.exp(-x))
 
     def activate_prime(self, x):
-        fx = 1 / (1 + math.exp(-x))
-        return np.ones_like(fx * (1 - fx))
+        return np.ones_like(1 / (1 + math.exp(-x)))
 
 
 class ReLU(Activation):
@@ -108,7 +107,7 @@ class ReLU(Activation):
         if x < 0:
             return np.ones_like(0)
         else:
-            return np.ones_like(1)
+            return np.ones_like(x)
 
 
 class ELU(Activation):
@@ -125,9 +124,9 @@ class ELU(Activation):
 
     def activate_prime(self, x, a):
         if x <= 0:
-            return np.ones_like(a * (math.exp(x) - 1) + a)
+            return np.ones_like(a * (math.exp(x) - 1))
         else:
-            return np.ones_like(1)
+            return np.ones_like(x)
 
 
 class Network():
@@ -159,13 +158,16 @@ class Network():
 
 
     def summary(self):
-        s  = "Layer Name\t\tUnits\tParameters\n"
+        s = "------------------------------------------\n"
+        s += "Layer Name\t\tUnits\tParameters\n"
+        s += "------------------------------------------\n"
         total_params = 0
         for layer in self.layers: 
             s += layer.pretty_print(verbose=0) + '\n'
             total_params += layer.num_parameters
         s += "------------------------------------------\n"
         s += "Total params: " +  str(total_params) + '\n'
+        s += "------------------------------------------\n"
         return s
 
     def stochastic_gradient_descent(self, training_data, epochs=50, batch_size=32, lr=1e-7, test_data=None, freq=1):
