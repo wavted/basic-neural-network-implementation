@@ -17,37 +17,6 @@ class Input():
         return s
 
 
-class Layer():
-    def __init__(self, nodes):
-        self.type = "dense"
-        self.nodes = nodes
-        self.biases = np.array(np.random.randn(nodes, 1))
-        #self.biases = np.zeros_like(self.biases)
-        self.weights = None
-        self.name = "Fully Connected Layer"
-        self.num_parameters = len(self.biases)
-        self.activation = Linear()
-
-    def forward(self, inputs, activation=True):
-        return self.activation.activate(np.dot(self.weights, inputs) + self.biases) if activation else np.dot(
-            self.weights, inputs) + self.biases
-
-    def activate(self, inputs):
-        return self.activation.activate(inputs)
-
-    def set_weight_dims(self, prev_layer):
-        self.weights = np.array(np.random.randn(self.nodes, prev_layer.nodes))
-        #self.weights = np.zeros_like(self.weights)
-        self.num_parameters = self.weights.size + self.biases.size
-
-    def pretty_print(self, verbose=1):
-        s = self.name + '\t' + str(self.nodes) + '\t' + str(self.num_parameters) + "\n" + self.activation.pretty_print(
-            verbose=0)
-        if (verbose):
-            print(s)
-        return s
-
-
 class Activation():
     def __init__(self):
         self.name = "Not Defined"
@@ -118,6 +87,36 @@ class ELU(Activation):
         else:
             return np.ones_like(x)
 
+class Layer():
+    def __init__(self, nodes, activation=Linear()):
+        self.type = "dense"
+        self.nodes = nodes
+        self.biases = np.array(np.random.randn(nodes, 1))
+        #self.biases = np.zeros_like(self.biases)
+        self.weights = None
+        self.name = "Fully Connected Layer"
+        self.num_parameters = len(self.biases)
+        self.activation = activation
+
+    def forward(self, inputs, activation=True):
+        return self.activation.activate(np.dot(self.weights, inputs) + self.biases) if activation else np.dot(
+            self.weights, inputs) + self.biases
+
+    def activate(self, inputs):
+        return self.activation.activate(inputs)
+
+    def set_weight_dims(self, prev_layer):
+        self.weights = np.array(np.random.randn(self.nodes, prev_layer.nodes))
+        #self.weights = np.zeros_like(self.weights)
+        self.num_parameters = self.weights.size + self.biases.size
+
+    def pretty_print(self, verbose=1):
+        s = self.name + '\t' + str(self.nodes) + '\t' + str(self.num_parameters) + "\n" + self.activation.pretty_print(
+            verbose=0)
+        if (verbose):
+            print(s)
+        return s
+
 
 class Network():
     def __init__(self):
@@ -160,7 +159,7 @@ class Network():
         s += "------------------------------------------\n"
         return s
 
-    def stochastic_gradient_descent(self, training_data, epochs=50, batch_size=32, lr=1e-7, test_data=None, freq=1):
+    def stochastic_gradient_descent(self, training_data, epochs=50, batch_size=32, lr=1e-7, test_data=None, freq=1, cat_eval=False):
         if (not self.cost):
             print("Error: Network not compiled with a cost function!")
             return
@@ -182,6 +181,17 @@ class Network():
                     loss += self.cost.evaluate(y_hats[k], test_data[1][k])
                 loss /= len(test_data[0])
                 print("Epoch: " + str(i + 1), "Loss: " + str(loss))
+                if(cat_eval): 
+                    print("Acc: ", self.categorical_evaluate(test_data))
+
+    def categorical_evaluate(self, test_data):
+        y_hats =self.feed_forward(test_data[0])
+        y_hats = np.array([np.argmax(y_hat) for y_hat in y_hats])
+        s = 0
+        for i in range(len(y_hats)): 
+            if(y_hats[i] == np.argmax(test_data[1][i])): 
+                s += 1
+        return s/len(y_hats)
 
     def backprop(self, x_train_batch, y_train_batch):
         batch_size = len(x_train_batch)
@@ -211,6 +221,7 @@ class Network():
             #print(activations)
             activation_input = layer.forward(activations[-1], activation=False)
             activation_inputs.append(activation_input)
+            #activation_inputs.append(activation_input) try this
             #print(activation_inputs)
             activation = layer.activate(activation_inputs[-1])
             activations.append(activation)
@@ -258,6 +269,16 @@ class MSE(Cost):
 
     def prime(self, y_hat, y):
         return np.mean(2 * (y_hat - y))
+        #return 2*(y_hat - y)
+
+#not complete
+class Cross_Entropy(Cost): 
+    def __init__(self): 
+        self.name = "Cross Entropy"
+
+    def evaluate(self, y_hat, y): 
+        return np.sum(np.nan_to_num(np.where(y == 1, -log(y_hat), -log(1 - y_hat))))
+
 
 
 class Batch_Generator():
