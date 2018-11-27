@@ -29,11 +29,6 @@ class Layer():
         self.activation = Linear()
 
     def forward(self, inputs, activation=True):
-        '''
-        if(self.weights): 
-            print("Weights not initialized")
-            return
-        '''
         return self.activation.activate(np.dot(self.weights, inputs) + self.biases) if activation else np.dot(
             self.weights, inputs) + self.biases
 
@@ -85,10 +80,11 @@ class Sigmoid(Activation):
         self.name = "Sigmoid Activation"
 
     def activate(self, x):
-        return 1 / (1 + math.exp(-x))
+        return 1 / (1 + np.exp(-x))
 
     def activate_prime(self, x):
-        return np.ones_like(1 / (1 + math.exp(-x)))
+        f = self.activate(x)
+        return f*(1 - f)
 
 
 class ReLU(Activation):
@@ -98,16 +94,10 @@ class ReLU(Activation):
         self.name = "ReLU Activation"
 
     def activate(self, x):
-        if x < 0:
-            return 0
-        else:
-            return x
+        return np.where(x > 0, x, 0)
 
     def activate_prime(self, x):
-        if x < 0:
-            return np.ones_like(0)
-        else:
-            return np.ones_like(x)
+        return np.where(x > 0, 1, 0)
 
 
 class ELU(Activation):
@@ -116,15 +106,15 @@ class ELU(Activation):
         self.type = "activation"
         self.name = "ReLU Activation"
 
-    def activate(self, x, a):
+    def activate(self, x, a=1):
         if x <= 0:
-            return a * (math.exp(x) - 1)
+            return a * (np.exp(x) - 1)
         else:
             return x
 
-    def activate_prime(self, x, a):
+    def activate_prime(self, x, a=1):
         if x <= 0:
-            return np.ones_like(a * (math.exp(x) - 1))
+            return a * np.exp(x)
         else:
             return np.ones_like(x)
 
@@ -145,8 +135,8 @@ class Network():
 
     def feed_forward(self, inputs_list):
         outputs = list()
-        #inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
-        inputs_list = inputs_list.reshape(inputs_list.shape + (1,))
+        inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
+        #inputs_list = inputs_list.reshape(inputs_list.shape + (1,))
         for inputs in inputs_list:
             # output = inputs.reshape(len(inputs), 1)
             output = inputs
@@ -180,15 +170,11 @@ class Network():
             (x_train_batch, y_train_batch), done = generator.query()
             while (not done):
                 (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
-                #print(grad_weights)
-                # for w in grad_weights:
-                #    print(w)
-                # for l in self.layers[1:]:
-                #    print(l.weights.shape)
                 for j in range(len(self.layers))[1:]:
                     self.layers[j].weights = self.layers[j].weights - lr * grad_weights[j - 1]
                     self.layers[j].biases = self.layers[j].biases - lr * grad_biases[j - 1]
                 (x_train_batch, y_train_batch), done = generator.query()
+
             if(test_data and i%freq == 0):
                 loss = 0 
                 y_hats = self.feed_forward(test_data[0])
@@ -197,51 +183,12 @@ class Network():
                 loss /= len(test_data[0])
                 print("Epoch: " + str(i + 1), "Loss: " + str(loss))
 
-    '''
-    def backprop(self, x_train_batch, y_train_batch): 
-        
-        #need to compute and return gradients
-        grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
-        grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
-        activations = list()
-        activation_inputs = list()
-        activation = x_train_batch
-        activations.append(activation)
-
-        for layer in self.layers[1:]: 
-            activation_input = [layer.forward(x, activation=False) for x in activations[-1]]
-            activation_inputs.append(activation_input)
-            activation = [layer.activate(weighted_sum) for weighted_sum in activation_input[-1]]
-            activations.append(activation)
-
-        activation_inputs = activation_inputs
-        #print(activations)
-
-        #y_hat_arr = [activations[layer_index][-1] for layer_index in range(len(self.layers))[1:]] #y_hat_arr = self.feed_forward(x_train_batch)
-        y_hat_arr = activations[-1]
-        cost_prime = np.mean(np.array([self.cost.prime(y_hat_arr[i], y_train_batch[i]) for i in range(len(y_hat_arr))]))
-        delta = cost_prime*self.layers[-1].activation.activate_prime(activation_inputs[-1])
-        print(delta.shape)
-        for layer_index in range(1 - len(self.layers), -1)[::-1]:
-            activation_input = activation_inputs[layer_index]
-            activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
-            print("here: ", activation_prime.shape)
-            delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta)*activation_prime
-            grad_biases[layer_index] = delta
-            grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
-
-        print(grad_weights, grad_biases)
-        return (grad_weights, grad_biases)
-    '''
-
     def backprop(self, x_train_batch, y_train_batch):
         batch_size = len(x_train_batch)
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         for x, y in zip(x_train_batch, y_train_batch):
             grad_weights_new, grad_biases_new = self.backprop_one(x, y)
-            # grad_weights += grad_weights_new
-            # grad_biases += grad_biases_new
             grad_weights = [grad_weights[i] + grad_weights_new[i] for i in range(len(grad_weights))]
             grad_biases = [grad_biases[i] + grad_biases_new[i] for i in range(len(grad_biases))]
         grad_weights = [layer_grad_weights / batch_size for layer_grad_weights in grad_weights]
@@ -250,7 +197,8 @@ class Network():
         return (grad_weights, grad_biases)
 
     def backprop_one(self, x, y):
-        x = x.reshape(x.shape + (1,))
+        #x = x.reshape(x.shape + (1,))
+        x = x.reshape((len(x), 1))
         #print(x.shape)
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
