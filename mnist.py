@@ -5,8 +5,8 @@ from keras.utils.np_utils import to_categorical
 
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train = x_train.reshape((len(x_train), 784))
-x_test = x_test.reshape((len(x_test), 784))
+x_train = x_train.reshape((len(x_train), 784))/255
+x_test = x_test.reshape((len(x_test), 784))/255
 print(x_test.shape)
 
 y_train = to_categorical(y_train, 10)
@@ -31,7 +31,7 @@ print(model.feed_forward(inputs))
 #print(y_hats)
 print(y_test[0:10])
 
-model.stochastic_gradient_descent((x_train, y_train), epochs=50, lr=3e-4, test_data=(x_test, y_test), cat_eval=True, freq=2)
+model.stochastic_gradient_descent((x_train, y_train), epochs=10, lr=1e-1, test_data=(x_test, y_test), cat_eval=True, freq=2)
 print(model.feed_forward(inputs))
 print(y_test[0:10])
 
