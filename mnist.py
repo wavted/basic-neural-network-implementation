@@ -14,7 +14,7 @@ y_test = to_categorical(y_test, 10)
 
 model = Network()
 model.add(Input(784))
-model.add(Layer(30, activation=Sigmoid()))
+#model.add(Layer(30, activation=Sigmoid()))
 model.add(Layer(10, activation=Sigmoid()))
 
 
@@ -31,7 +31,7 @@ print(model.feed_forward(inputs))
 #print(y_hats)
 print(y_test[0:10])
 
-model.stochastic_gradient_descent((x_train, y_train), epochs=5, lr=50, test_data=(x_test, y_test), cat_eval=True, freq=1)
+model.stochastic_gradient_descent((x_train, y_train), epochs=50, lr=3e-4, test_data=(x_test, y_test), cat_eval=True, freq=2)
 print(model.feed_forward(inputs))
 print(y_test[0:10])
 

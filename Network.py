@@ -49,7 +49,8 @@ class Sigmoid(Activation):
         self.name = "Sigmoid Activation"
 
     def activate(self, x):
-        return 1 / (1 + np.exp(-x))
+        #return 1 / (1 + np.exp(-x))
+        return .5 * (1 + np.tanh(.5 * x))
 
     def activate_prime(self, x):
         f = self.activate(x)
@@ -221,7 +222,7 @@ class Network():
             #print(activations)
             activation_input = layer.forward(activations[-1], activation=False)
             activation_inputs.append(activation_input)
-            #activation_inputs.append(activation_input) try this
+            #activation_inputs.append(activation_input[0]) try this
             #print(activation_inputs)
             activation = layer.activate(activation_inputs[-1])
             activations.append(activation)
