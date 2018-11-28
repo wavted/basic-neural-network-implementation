@@ -1,4 +1,4 @@
-from Network import Network, Layer, Input, Linear, MSE, Sigmoid, Softmax, Cross_Entropy
+from Network import Network, Layer, Input, Linear, MSE, Sigmoid, Softmax, Cross_Entropy, ReLU
 import numpy as np
 from keras.datasets import mnist
 from keras.utils.np_utils import to_categorical 
@@ -31,7 +31,9 @@ print(model.feed_forward(inputs))
 #print(y_hats)
 print(y_test[0:10])
 
-model.stochastic_gradient_descent((x_train, y_train), epochs=100, lr=3, test_data=(x_test, y_test), cat_eval=True, freq=1)
+model.stochastic_gradient_descent((x_train, y_train), epochs=25, lr=3, test_data=(x_test, y_test), cat_eval=True, freq=1)
 print(model.feed_forward(inputs))
 print(y_test[0:10])
+
+model.save('mnist.pkl')
 

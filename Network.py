@@ -1,6 +1,7 @@
 import numpy as np
 import tqdm
 import math
+import pickle
 
 
 class Input():
@@ -270,6 +271,10 @@ class Network():
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
         #print(grad_weights)
         return (grad_weights, grad_biases)
+
+    def save(self, name): 
+        with open(name, 'wb') as output: 
+            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
 
 
 class Cost():
