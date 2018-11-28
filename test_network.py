@@ -9,7 +9,8 @@ x_test = (x_test -np.mean(x_test))/np.std(x_test)
 
 model = Network()
 model.add(Input(13))
-model.add(Layer(13))
+model.add(Layer(2))
+model.add(Layer(2))
 model.add(Layer(1))
 
 

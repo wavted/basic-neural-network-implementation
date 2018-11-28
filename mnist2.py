@@ -1,4 +1,4 @@
-from Network import Network, Layer, Input, Linear, MSE, Sigmoid
+from Network import Network, Layer, Input, Linear, MSE, Sigmoid, Softmax, Cross_Entropy
 import numpy as np
 from keras.datasets import mnist
 from keras.utils.np_utils import to_categorical 
@@ -15,10 +15,10 @@ y_test = to_categorical(y_test, 10)
 model = Network()
 model.add(Input(784))
 model.add(Layer(30, activation=Sigmoid()))
-model.add(Layer(10, activation=Sigmoid()))
+model.add(Layer(10, activation=Softmax()))
 
 
-model.add_cost_function(MSE())
+model.add_cost_function(Cross_Entropy())
 
 
 print(model.summary())
@@ -31,8 +31,7 @@ print(model.feed_forward(inputs))
 #print(y_hats)
 print(y_test[0:10])
 
-model.stochastic_gradient_descent((x_train, y_train), epochs=100, lr=0.01, test_data=(x_test, y_test), cat_eval=True, freq=1)
+model.stochastic_gradient_descent((x_train, y_train), epochs=100, lr=3, test_data=(x_test, y_test), cat_eval=True, freq=1)
 print(model.feed_forward(inputs))
 print(y_test[0:10])
-
 

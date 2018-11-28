@@ -88,6 +88,19 @@ class ELU(Activation):
         else:
             return np.ones_like(x)
 
+class Softmax(Activation): 
+    def __init__(self): 
+        super()
+        self.name = "Softmax"
+
+    def activate(self, x):
+        a = np.exp(x)
+        return a/np.sum(a)
+
+    def activate_prime(self, y_hat, y): 
+        return y_hat - y
+
+
 class Layer():
     def __init__(self, nodes, activation=Linear()):
         self.type = "dense"
@@ -170,7 +183,7 @@ class Network():
             generator.randomize()
             (x_train_batch, y_train_batch), done = generator.query()
             while (not done):
-                (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch)
+                (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch, cat_eval=cat_eval)
                 for j in range(len(self.layers))[1:]:
                     self.layers[j].weights = self.layers[j].weights - lr * grad_weights[j - 1]
                     self.layers[j].biases = self.layers[j].biases - lr * grad_biases[j - 1]
@@ -195,12 +208,12 @@ class Network():
                 s += 1
         return s/len(y_hats)
 
-    def backprop(self, x_train_batch, y_train_batch):
+    def backprop(self, x_train_batch, y_train_batch, cat_eval=False):
         batch_size = len(x_train_batch)
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         for x, y in zip(x_train_batch, y_train_batch):
-            grad_weights_new, grad_biases_new = self.backprop_one(x, y)
+            grad_weights_new, grad_biases_new = self.backprop_one(x, y, cat_eval=cat_eval)
             grad_weights = [grad_weights[i] + grad_weights_new[i] for i in range(len(grad_weights))]
             grad_biases = [grad_biases[i] + grad_biases_new[i] for i in range(len(grad_biases))]
         grad_weights = [layer_grad_weights / batch_size for layer_grad_weights in grad_weights]
@@ -208,7 +221,7 @@ class Network():
 
         return (grad_weights, grad_biases)
 
-    def backprop_one(self, x, y):
+    def backprop_one(self, x, y, cat_eval=False):
         #x = x.reshape(x.shape + (1,))
         x = x.reshape((len(x), 1))
         #print(x.shape)
@@ -234,9 +247,15 @@ class Network():
         #print(activation_inputs)
 
         y_hat = activations[-1]
-        cost_prime = self.cost.prime(y_hat, y)
-        #print(cost_prime)
-        delta = cost_prime * self.layers[-1].activation.activate_prime(activation_inputs[-1])
+        if not cat_eval:
+            cost_prime = self.cost.prime(y_hat, y)
+            delta = cost_prime * self.layers[-1].activation.activate_prime(activation_inputs[-1])
+        else: 
+            #delta = self.layers[-1].activation.activate_prime(activations[-1], y)
+            delta = activations[-1] - y.reshape((len(y), 1))
+            #print(activations[-1].shape, y.shape)
+            #print(delta.shape)
+
         grad_biases[-1] = delta
         grad_weights[-1] = np.dot(delta, activations[-2].transpose())
         #print(delta)
@@ -278,13 +297,17 @@ class MSE(Cost):
         return np.mean(2 * (y_hat - y))
         #return 2*(y_hat - y)
 
+
 #not complete
 class Cross_Entropy(Cost): 
     def __init__(self): 
         self.name = "Cross Entropy"
 
     def evaluate(self, y_hat, y): 
-        return np.sum(np.nan_to_num(np.where(y == 1, -log(y_hat), -log(1 - y_hat))))
+        return np.sum(np.nan_to_num(np.where(y == 1, -np.log(y_hat), -np.log(1 - y_hat))))
+
+    def prime(self, y_hat, y): 
+        return 0
 
 
 
