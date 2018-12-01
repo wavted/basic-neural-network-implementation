@@ -217,7 +217,7 @@ class Network():
     #The core part of backpropagation is implemented in the helper function backprop_one.
     def backprop(self, x_train_batch, y_train_batch, cat_eval=False):
         batch_size = len(x_train_batch)
-        #Initialize the arrays to store the sum of gradience.
+        #Initialize the arrays to store the average of gradience.
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         for x, y in zip(x_train_batch, y_train_batch):
@@ -261,7 +261,7 @@ class Network():
             #Calculate gradient of the cost function
             cost_prime = self.cost.prime(y_hat, y)
             #Calculate the initial error of the last layer
-            #See euqation 16 in the project report
+            #See equation 16 in the project report
             delta = cost_prime * self.layers[-1].activation.activate_prime(activation_inputs[-1])
         else: 
             delta = activations[-1] - y.reshape((len(y), 1))
