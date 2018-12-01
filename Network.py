@@ -8,7 +8,7 @@ import pickle
 #parent activation function class.
 #Every activation function has an activate function to compute the activation. 
 #an activate_prime function to compute the derivative of the activation, 
-#and a pretty_print function that displays information about the activation
+#and a pretty_print function that displays information about the activation.
 class Activation():
     def __init__(self):
         self.name = "Not Defined"
@@ -25,7 +25,7 @@ class Activation():
             print(s)
         return s
 
-#Below we define the Linear, sigmoid and softmax activations
+#Below we define the Linear, sigmoid and softmax activations.
 class Linear(Activation):
     def __init__(self):
         super().__init__()
@@ -59,7 +59,7 @@ class Softmax(Activation):
         return y_hat - y
 
 #This class defines the input layer.
-#Its purpose is to inform the Network class about the dimension of the Input vectors
+#Its purpose is to inform the Network class about the dimension of the Input vectors.
 class Input():
     def __init__(self, nodes):
         self.type = "input"
@@ -74,13 +74,13 @@ class Input():
             print(s)
         return s
 
-#This class defines a fully connected layer for the neural network
-#We can create a layer with arbitrary number of nodes/neurons
-#The weight contains its own weights and biases
+#This class defines a fully connected layer for the neural network.
+#We can create a layer with arbitrary number of nodes/neurons.
+#The weight contains its own weights and biases.
 class Layer():
     def __init__(self, nodes, activation=Linear()):
         self.type = "dense"
-        #these are the number of neurons in the layer
+        #These are the number of neurons in the layer
         self.nodes = nodes
         #The layer's biases
         self.biases = np.array(np.random.randn(nodes, 1))
@@ -99,7 +99,7 @@ class Layer():
         return self.activation.activate(np.dot(self.weights, inputs) + self.biases) if activation else np.dot(
             self.weights, inputs) + self.biases
     
-    #Apply activation function to weighted sum
+    #Apply activation function to weighted sum.
     def activate(self, inputs):
         return self.activation.activate(inputs)
 
@@ -107,7 +107,7 @@ class Layer():
         self.weights = np.array(np.random.randn(self.nodes, prev_layer.nodes))
         self.num_parameters = self.weights.size + self.biases.size
 
-    #Displays information about the layer
+    #Displays information about the layer.
     def pretty_print(self, verbose=1):
         s = self.name + '\t' + str(self.nodes) + '\t' + str(self.num_parameters) + "\n" + self.activation.pretty_print(
             verbose=0)
@@ -115,16 +115,16 @@ class Layer():
             print(s)
         return s
 
-
+#This class implements the neural network
 class Network():
     def __init__(self):
         self.layers = []
 
-    #Adds a cost function to the layer
+    #Adds a cost function to the layer.
     def add_cost_function(self, cost):
         self.cost = cost
 
-    #Adds input and other layers to the network
+    #Adds input and other layers to the network.
     def add(self, layer):
         if (len(self.layers) == 0):
             self.layers.append(layer)
@@ -133,12 +133,12 @@ class Network():
             self.layers.append(layer)
 
     #This implements the forward propagation. It is implemented by calling the forward function 
-    # of each of the layers in the network
+    # of each of the layers in the network.
     def feed_forward(self, inputs_list):
         outputs = list()
-        #we reshape the dimension of the inputs for compatibility with our layers' forward functions
+        #We reshape the dimension of the inputs for compatibility with our layers' forward functions.
         inputs_list = inputs_list.reshape((inputs_list.shape[0], inputs_list.shape[1], 1))
-        #for each layer we forward propagate
+        #For each layer we forward propagate
         for inputs in inputs_list:
             output = inputs
             for layer in self.layers[1:]:
@@ -148,7 +148,7 @@ class Network():
         outputs = np.array([o.reshape((len(o),)) for o in outputs])
         return outputs
 
-    #This function displays information about the network
+    #This function displays information about the network.
     def summary(self):
         s = "------------------------------------------\n"
         s += "Layer Name\t\tUnits\tParameters\n"
@@ -162,12 +162,12 @@ class Network():
         s += "------------------------------------------\n"
         return s
 
-    #This implements stochastic gradient descent to train the neural network
+    #This implements stochastic gradient descent to train the neural network.
     def stochastic_gradient_descent(self, training_data, epochs=50, batch_size=32, lr=1e-7, test_data=None, freq=1, cat_eval=False):
         if (not self.cost):
             print("Error: Network not compiled with a cost function!")
             return
-        #We train for the specified number of epochs in this for loop
+        #We train for the specified number of epochs in this for loop.
         for i in range(epochs):
             #We instantiate the Batch_Generator to obtain the dataset in batches of size batch_size
             generator = Batch_Generator(training_data, batch_size)
@@ -176,21 +176,21 @@ class Network():
             #we query the generator to obtain a batch of the data
             (x_train_batch, y_train_batch), done = generator.query()
 
-            #This loop ends when we have finished iterating over the whole dataset once
+            #This loop ends when we have finished iterating over the whole dataset once.
             while (not done):
-                #We use the backprop function to obtain the gradients with respect to all the weights and biases
+                #We use the backprop function to obtain the gradients with respect to all the weights and biases.
                 (grad_weights, grad_biases) = self.backprop(x_train_batch, y_train_batch, cat_eval=cat_eval)
                 
-                #We perform the stochastic gradient descent update rules for each layer
+                #We perform the stochastic gradient descent update rules for each layer.
                 for j in range(len(self.layers))[1:]:
-                    #update rules according to equations 6 in the report
+                    #update rules according to equations 6 in the report.
                     self.layers[j].weights = self.layers[j].weights - lr * grad_weights[j - 1]
                     self.layers[j].biases = self.layers[j].biases - lr * grad_biases[j - 1]
                 
-                #Query the next batch of data 
+                #Query the next batch of data
                 (x_train_batch, y_train_batch), done = generator.query()
 
-            #This evaluates the model on the test_data if test_data every freq number of epochs
+            #This evaluates the model on the test_data if test_data every freq number of epochs.
             #This way we can get a feel for how the model is training as we are training it.
             if(test_data and i%freq == 0):
                 loss = 0 
@@ -202,7 +202,7 @@ class Network():
                 if(cat_eval): 
                     print("Acc: ", self.categorical_evaluate(test_data))
 
-    #This is a helper function that evaluates the accuracy for multiclass outputs such as in classification
+    #This is a helper function that evaluates the accuracy for multiclass outputs such as in classification.
     def categorical_evaluate(self, test_data):
         y_hats =self.feed_forward(test_data[0])
         y_hats = np.array([np.argmax(y_hat) for y_hat in y_hats])
@@ -212,38 +212,41 @@ class Network():
                 s += 1
         return s/len(y_hats)
 
-    #This sums up and calcualte the mean of backpropagation results among a set of data.
-    #The core part of backpropagation is implemented in the helper function backprop_one
+    #This sums up and calcualate the mean of gradience of cost over a batch.
+    #The core part of backpropagation is implemented in the helper function backprop_one.
     def backprop(self, x_train_batch, y_train_batch, cat_eval=False):
         batch_size = len(x_train_batch)
+        #Initialize the arrays to store the sum of gradience.
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         for x, y in zip(x_train_batch, y_train_batch):
-            #Call helper function backprop_one which calculates the gradient of one data point
+            #Call helper function backprop_one which calculates the gradient of one data point.
             grad_weights_new, grad_biases_new = self.backprop_one(x, y, cat_eval=cat_eval)
-            #Sum up the gradient of different data points in the training data set
+            #Sum up the gradient of different data points in the training data set.
             grad_weights = [grad_weights[i] + grad_weights_new[i] for i in range(len(grad_weights))]
             grad_biases = [grad_biases[i] + grad_biases_new[i] for i in range(len(grad_biases))]
-        #Average the gradient among all data points in the training data set by dividing the sum
+        #Average the gradient among all data points in the training data set by dividing the sum.
         grad_weights = [layer_grad_weights / batch_size for layer_grad_weights in grad_weights]
         grad_biases = [layer_grad_biases / batch_size for layer_grad_biases in grad_biases]
 
         return (grad_weights, grad_biases)
     
-    #This implements the backpropagation algorithm that passes error to previous layers
+    #This implements the backpropagation algorithm that passes error to previous layers.
     #It calculates the error in weights and biases of each layer by starting from the
     #output layer and traversing back, calculating the error in each layer based on the error
     #of the previous one.
     def backprop_one(self, x, y, cat_eval=False):
         x = x.reshape((len(x), 1))
+        #Initialize the arrays to store the gradience.
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         activations = list()
         activation_inputs = list()
+        #The input is treated as activations of the input layer.
         activation = x
         activations.append(activation)
         
-        #Feedfoward and store the activation input and output for back prop
+        #Feedfoward and store the input of the activation and the activations for back prop.
         for layer in self.layers[1:]:
             activation_input = layer.forward(activations[-1], activation=False)
             activation_inputs.append(activation_input)
@@ -251,14 +254,20 @@ class Network():
             activations.append(activation)
 
         #Calculate the gradient in the output layer
+        #Treat last activation as the output and compare it to the actual value
         y_hat = activations[-1]
         if not cat_eval:
+            #Calculate gradient of the cost function
             cost_prime = self.cost.prime(y_hat, y)
+            #Calculate the initial error of the last layer
+            #See euqation 16 in the project report
             delta = cost_prime * self.layers[-1].activation.activate_prime(activation_inputs[-1])
         else: 
             delta = activations[-1] - y.reshape((len(y), 1))
 
         grad_biases[-1] = delta
+        #Calculate the gradient with respect to weights.
+        #See equation 18
         grad_weights[-1] = np.dot(delta, activations[-2].transpose())
         
         #Traversing backwards in the layer array and calculate the gradient in each layer
@@ -274,7 +283,7 @@ class Network():
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
         return (grad_weights, grad_biases)
 
-    #This saves the network as a pkl file
+    #This saves the network as a pkl file.
     def save(self, name): 
         with open(name, 'wb') as output: 
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
@@ -282,7 +291,7 @@ class Network():
 
 #This is the parent cost function which defines an interface. 
 #Every cost function must have an evaluate function to evaluate the cost
-# and a prime function that implements its derivative 
+# and a prime function that implements its derivative.
 class Cost():
     def __init__(self):
         self.name = "Not Defined"
@@ -295,7 +304,7 @@ class Cost():
         print('Warning: Undefined cost function!')
         return 0
 
-#Below we have defined Mean squared error and Cross-Entropy Cost functions
+#Below we have defined Mean squared error and Cross-Entropy Cost functions.
 
 class MSE(Cost):
     def __init__(self):
@@ -316,12 +325,12 @@ class Cross_Entropy(Cost):
     def evaluate(self, y_hat, y): 
         return np.sum(np.nan_to_num(np.where(y == 1, -np.log(y_hat), -np.log(1 - y_hat))))
 
-    #dummy derivative, since we do not use this in our implementation
+    #Dummy derivative, since we do not use this in our implementation
     def prime(self, y_hat, y): 
         return 0
 
 
-#This class performs data processing such as randomization and division into batches of equal size
+#This class performs data processing such as randomization and division into batches of equal size.
 class Batch_Generator():
     def __init__(self, data_set, batch_size=32, randomize=False):
         self.x, self.y = data_set
@@ -330,16 +339,16 @@ class Batch_Generator():
         if (randomize):
             self.randomize()
 
-    #This randomizes the order of the dataset
+    #This randomizes the order of the dataset.
     def randomize(self):
         shuffled_indices = np.array(range(len(self.x)))
         np.random.shuffle(shuffled_indices)
         self.x = self.x[shuffled_indices]
         self.y = self.y[shuffled_indices]
 
-    #This returns a batch of the dataset of size self.batch_size
+    #This returns a batch of the dataset of size self.batch_size.
     #It also returns a boolean value finished which indicates whether we have 
-    #finished iterating over the whole dataset
+    #finished iterating over the whole dataset.
     def query(self):
         new_index = self.current_index + self.batch_size
         batch = (self.x[self.current_index: new_index], self.y[self.current_index: new_index])
