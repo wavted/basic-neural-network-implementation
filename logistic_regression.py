@@ -19,8 +19,7 @@ model = Network()
 #The input images are 28 by 28. Since we reshaped it into a 1D array of size 784, 
 #the input layer is 784 dimensional.
 model.add(Input(784))
-#We add two fully connected layers with sigmoid activations
-model.add(Layer(30, activation=Sigmoid()))
+#We have only one fully connected layer since this is logistic regression
 model.add(Layer(10, activation=Sigmoid()))
 
 #We add the Cross_Entropy cost function our network

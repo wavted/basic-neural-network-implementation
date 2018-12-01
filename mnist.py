@@ -3,11 +3,11 @@ import numpy as np
 from keras.datasets import mnist
 from keras.utils.np_utils import to_categorical 
 
-
+#We load the datset
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 x_train = x_train.reshape((len(x_train), 784))/255
 x_test = x_test.reshape((len(x_test), 784))/255
-print(x_test.shape)
+
 
 y_train = to_categorical(y_train, 10)
 y_test = to_categorical(y_test, 10)
