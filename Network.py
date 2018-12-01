@@ -93,10 +93,13 @@ class Layer():
 
     #This performs forward propagation through the layer. It uses matrix multiplication to obtain the weighted sum
     # z and then optionally passes that through its activation function.
+    #Activation calculated according to equation 1 in the project report.
     def forward(self, inputs, activation=True):
+       
         return self.activation.activate(np.dot(self.weights, inputs) + self.biases) if activation else np.dot(
             self.weights, inputs) + self.biases
-
+    
+    #Apply activation function to weighted sum
     def activate(self, inputs):
         return self.activation.activate(inputs)
 
@@ -209,19 +212,28 @@ class Network():
                 s += 1
         return s/len(y_hats)
 
+    #This sums up and calcualte the mean of backpropagation results among a set of data.
+    #The core part of backpropagation is implemented in the helper function backprop_one
     def backprop(self, x_train_batch, y_train_batch, cat_eval=False):
         batch_size = len(x_train_batch)
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
         grad_weights = [np.zeros(layer.weights.shape) for layer in self.layers[1:]]
         for x, y in zip(x_train_batch, y_train_batch):
+            #Call helper function backprop_one which calculates the gradient of one data point
             grad_weights_new, grad_biases_new = self.backprop_one(x, y, cat_eval=cat_eval)
+            #Sum up the gradient of different data points in the training data set
             grad_weights = [grad_weights[i] + grad_weights_new[i] for i in range(len(grad_weights))]
             grad_biases = [grad_biases[i] + grad_biases_new[i] for i in range(len(grad_biases))]
+        #Average the gradient among all data points in the training data set by dividing the sum
         grad_weights = [layer_grad_weights / batch_size for layer_grad_weights in grad_weights]
         grad_biases = [layer_grad_biases / batch_size for layer_grad_biases in grad_biases]
 
         return (grad_weights, grad_biases)
-
+    
+    #This implements the backpropagation algorithm that passes error to previous layers
+    #It calculates the error in weights and biases of each layer by starting from the
+    #output layer and traversing back, calculating the error in each layer based on the error
+    #of the previous one.
     def backprop_one(self, x, y, cat_eval=False):
         x = x.reshape((len(x), 1))
         grad_biases = [np.zeros(layer.biases.shape) for layer in self.layers[1:]]
@@ -230,14 +242,15 @@ class Network():
         activation_inputs = list()
         activation = x
         activations.append(activation)
-
+        
+        #Feedfoward and store the activation input and output for back prop
         for layer in self.layers[1:]:
             activation_input = layer.forward(activations[-1], activation=False)
             activation_inputs.append(activation_input)
             activation = layer.activate(activation_inputs[-1])
             activations.append(activation)
 
-
+        #Calculate the gradient in the output layer
         y_hat = activations[-1]
         if not cat_eval:
             cost_prime = self.cost.prime(y_hat, y)
@@ -247,12 +260,17 @@ class Network():
 
         grad_biases[-1] = delta
         grad_weights[-1] = np.dot(delta, activations[-2].transpose())
-
+        
+        #Traversing backwards in the layer array and calculate the gradient in each layer
         for layer_index in range(1 - len(self.layers), -1)[::-1]:
             activation_input = activation_inputs[layer_index]
             activation_prime = self.layers[layer_index].activation.activate_prime(activation_input)
+            #Update the error by using the error passed down from the previous layer
+            #See equation 17
             delta = np.dot(self.layers[layer_index + 1].weights.transpose(), delta) * activation_prime
             grad_biases[layer_index] = delta
+            #Calculate the gradient with respect to weights
+            #See equation 18
             grad_weights[layer_index] = np.dot(delta, activations[layer_index - 1].transpose())
         return (grad_weights, grad_biases)
 
