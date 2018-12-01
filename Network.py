@@ -118,6 +118,7 @@ class Layer():
 #This class implements the neural network
 class Network():
     def __init__(self):
+        #This array contains all the layers in the network (including input layer).
         self.layers = []
 
     #Adds a cost function to the layer.
